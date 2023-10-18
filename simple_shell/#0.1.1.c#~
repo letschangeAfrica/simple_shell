@@ -1,0 +1,85 @@
+#include "shell.h"
+
+char *custom_getline(void)
+{
+char input_buffer[BUFFER_SIZE];
+char *line = NULL;
+int line_length = 0;
+
+int read_input(void) {
+{
+int input_buffer_index = 0;
+if (input_buffer_index == 0)
+{
+int bytes_read = read(STDIN_FILENO, input_buffer, BUFFER_SIZE);
+if (bytes_read == 0)
+{
+  return (0); // End of input
+}
+if (bytes_read < 0)
+{
+perror("Error reading command");
+return (-1);
+}
+}
+return (1);
+}
+ 
+char* find_newline(void)
+{
+char *newline = memchr(input_buffer + input_buffer_index, '\n', bytes_read - input_buffer_index);
+return (newline);
+}
+char *extract_line(char *newline) {
+{
+int line_end_index = newline - input_buffer + input_buffer_index;
+int line_size = line_end_index - input_buffer_index;
+char *line = malloc(line_size + 1);
+if (line == NULL)
+{
+perror("Error allocating memory");
+return (NULL);
+}
+memcpy(line, input_buffer + input_buffer_index, line_size);
+line[line_size] = '\0';
+input_buffer_index = line_end_index + 1;
+return line;
+}
+char* custom_getline(void)
+{
+char* line = NULL;
+int line_length = 0;
+while (1) {
+        int result = read_input();
+
+        if (result == 0) {
+            return NULL; // End of input
+}
+if (result < 0) {
+return NULL;
+}
+char* newline = find_newline();
+if (newline != NULL) {
+line = extract_line(newline);
+return line;
+}
+line = line_realloc;
+memcpy(line + line_length, input_buffer + input_buffer_index, line_size);
+line_length += line_size;
+line[line_length] = '\0';
+input_buffer_index =line_end_index + 1;
+return (line);
+}
+int remaining_butes = bytes_read -input_buffer_index;
+char *line_realloc = realloc(line, line_length ? remaining_bytes + 1);
+if (line_realloc == NULL)
+{
+perror("Error allocating memory");
+return (NULL);
+}
+line = line_realloc;
+memcpy(line + line line_length, input_buffer + input_buffer_index, remaining_bytes);
+line_length += remaining_bytes;
+input_buffer_index = 0;
+}
+}

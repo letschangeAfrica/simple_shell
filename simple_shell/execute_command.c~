@@ -1,0 +1,29 @@
+#include "shell.h"
+#include <sys/types.h>
+#include <sys/wait.h>
+
+/**
+ * execute_command - execute command
+ *
+ * Return: nothing
+ */
+
+void execute_command(char *command)
+{
+pid_t pid = fork();
+
+if (pid < 0)
+{
+perror("Error forking process");
+return;
+}
+if (pid == 0)
+{
+system(command);
+exit(EXIT_FAILURE);
+}
+else
+{
+wait(NULL);
+}
+}
