@@ -1,5 +1,6 @@
 #ifndef SHELL_H
 #define SHELL_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -33,3 +34,4 @@ void handle_setenv(char **args);
 void handle_cd(char **args);
 
 #endif
+
