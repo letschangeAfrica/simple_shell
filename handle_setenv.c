@@ -11,3 +11,4 @@ if (setenv(args[1], args[2], 1) == -1)
 perror("Error settine environment variable");
 }
 }
+
