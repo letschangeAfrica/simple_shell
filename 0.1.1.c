@@ -2,7 +2,7 @@
 /**
  * read_input - Store the standard input in the buffer
  *
- * Return: 0 if there is more to read, -1 if there was an error in the input, 1 * otherwise.
+ * Return: 0ifthere ismoretoread,-1iftherewasanerrorinthe input, 1 otherwise.
  */
 int read_input(void)
 {
@@ -25,19 +25,19 @@ return (1);
 }
 
 /**
- * *find_newline - searches for the first occurnce of a newline in the input bu * ffer starting from the current index
- * Return: a pointer to the newline character if found or NULL if a newline cha * racter is not found
+ * *find_newline - searches for the first occurnce of a newlineintheinputbuffer
+ * Return: a pointer to the newline character if found or NULL
  */
 char *find_newline(void)
 {
-char *newline = memchr(input_buffer + input_buffer_index, '\n', BUFFER_SIZE - input_buffer_index);
+char *newline;
+newline = memchr(input_buffer + input_buffer_index, '\n', BUFFER_SIZE - input_buffer_index);
 
 return (newline);
 }
 
 /**
- * *extract_line - extracts a line from the input buffer up to the newline char * acter, allocates memory for the line, copies the characters from the input b * uff 
- * er to the line, adds a null terminator at the end.
+ * *extract_line - extracts alinefromtheinputbufferuptothe newline character
  * Return: a pointer to the extracted line.
  */
 
@@ -62,9 +62,9 @@ return (line);
 }
 
 /**
- * *custom_getline - read input from the standard input 
+ * *custom_getline - read input from the standard input
  * Return: a line of text as a dynamically allocated string
- * 
+ *
  */
 
 char *custom_getline(void)
@@ -110,5 +110,3 @@ input_buffer_index = 0;
 }
 }
 }
-
-
