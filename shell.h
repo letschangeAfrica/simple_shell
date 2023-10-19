@@ -14,6 +14,7 @@ extern char **environ;
  * Return:0 if SUCCESS
  *
  */
+int main(void);
 
 void handle_exit(void);
 void handle_env(void);
@@ -23,9 +24,5 @@ char *custom_getline(void);
 int read_input(void);
 char *find_newline(void);
 char *extract_line(char *newline);
-void handle_unsetenv(char *args[]);
-void handle_setenv(char *args[]);
-void handle_cd(char *args[]);
-
 #endif
 

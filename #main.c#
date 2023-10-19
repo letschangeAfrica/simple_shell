@@ -1,4 +1,8 @@
 #include "shell.h"
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 void tokenize_command(char *command, char **tokens);
 void handle_comments(char *command);
@@ -33,6 +37,7 @@ if (argc > 1)
 execute_file(argv[1]);
 return (0);
 }
+
 while (1)
 {
 printf("%s", prompt);
@@ -373,6 +378,17 @@ continue;
 
 fclose(file);
 }
+handle_alias(args);
+continue;
+}
+}
+}
+
+fclose(file);
+}
+
+
+/**
 
 
 /**
@@ -386,6 +402,24 @@ void tokenize_input(char *buffer, char **args)
 {
 char *token = strtok(buffer, " ");
 int arg_count = 0;
+ * tokenize_input - description
+ *@buffer: a pointer to a string
+ *@args: a pointer to a pointer to a string
+ * Return: nothing
+ */
+
+void tokenize_input(char *buffer, char **args)
+{
+char *token = strtok(buffer, " ");
+int arg_count = 0;
+while (token != NULL && arg_count < MAX_ARGS - 1)
+{
+args[arg_count] = token;
+arg_count++;
+token = strtok(NULL, " ");
+}
+args[arg_count] = NULL;
+}
 while (token != NULL && arg_count < MAX_ARGS - 1)
 {
 args[arg_count] = token;
