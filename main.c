@@ -104,31 +104,6 @@ token = strtok(NULL, " ");
 tokens[token_count] = NULL;
 }
 
-/**
- * execute_command - executes a command by forking a new process
- *@tokens: a pointer to a pointer to a string
- */
-void execute_command(char **tokens)
-{
-pid_t pid = fork();
-if (pid < 0)
-{
-perror("Error forking process");
-return;
-}
-
-if (pid == 0)
-{
-execvp(tokens[0], tokens);
-perror("Error executing command");
-exit(EXIT_FAILURE);
-}
-else
-{
-
-wait(NULL);
-}
-}
 
 /**
  * handle_alias - handle aliases in a command

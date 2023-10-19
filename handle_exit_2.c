@@ -71,32 +71,6 @@ return (0);
 }
 
 /**
- * execute_command_2 - executes a command by forking a child process
- * @args: pointer to a pointer to a string
- */
-void execute_command_2(char **args)
-{
-pid_t pid = fork();
-
-if (pid < 0)
-{
-perror("Error forking process");
-return;
-}
-
-if (pid == 0)
-{
-execvp(args[0], args);
-perror("Error executing command");
-exit(EXIT_FAILURE);
-}
-else
-{
-wait(NULL);
-}
-}
-
-/**
  * handle_exit_2 - handles the exit command
  *@args: pointer to a pointer to a string
  */

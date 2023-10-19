@@ -6,6 +6,8 @@
  */
 int read_input(void)
 {
+char input_buffer[BUFFER_SIZE];
+int input_buffer_index = 0;
 if (input_buffer_index == 0)
 {
 int bytes_read = read(STDIN_FILENO, input_buffer, BUFFER_SIZE);
@@ -30,6 +32,8 @@ return (1);
  */
 char *find_newline(void)
 {
+char input_buffer[BUFFER_SIZE];
+int input_buffer_index = 0;
 char *newline;
 newline = memchr(input_buffer + input_buffer_index,
 '\n',
@@ -46,6 +50,8 @@ return (newline);
 
 char *extract_line(char *newline)
 {
+char input_buffer[BUFFER_SIZE];
+int input_buffer_index = 0;
 int line_end_index = newline - input_buffer + input_buffer_index;
 int line_size = line_end_index - input_buffer_index;
 
@@ -72,6 +78,8 @@ return (line);
 
 char *custom_getline(void)
 {
+char input_buffer[BUFFER_SIZE];
+int input_buffer_index = 0;
 char *line = NULL;
 int line_length = 0;
 char *newline, *line_realloc;
