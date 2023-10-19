@@ -78,10 +78,8 @@ return (line);
 
 char *custom_getline(void)
 {
-char input_buffer[BUFFER_SIZE];
-int input_buffer_index = 0;
-char *line = NULL;
-int line_length = 0;
+char input_buffer[BUFFER_SIZE], *line = NULL;
+int input_buffer_index = 0, line_length = 0;
 char *newline, *line_realloc;
 int result, remaining_bytes;
 while (1)

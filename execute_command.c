@@ -4,7 +4,7 @@
 
 /**
  * execute_command_2 - execute command
- *
+ *@args: pointer to a pointer
  * Return: nothing
  */
 void execute_command_2(char **args)
