@@ -1,21 +1,25 @@
 #include "shell.h"
-#include <sys/types.h>
 #include <sys/wait.h>
-
-/**
- * main - central tour
- *@command: pointer to a string
- *@tokens:pointer to a string
- * Return: 0 if SUCCESS
- */
 void tokenize_command(char *command, char **tokens);
 void handle_comments(char *command);
-void handle_cd(char **args);
 void handle_alias(char **args);
 void handle_variables(char *args);
 void execute_file(char *filename);
-void execute_command(char **tokens);
+void execute_command(const char *command_path, char **args);
+void tokenize_input(char *buffer, char **args);
+void handle_exit(void);
+void handle_setenv(char **args);
+void handle_unsetenv(char **args);
+void handle_env(void);
+void execute_external_command(char **args);
+void  handle_cd(char **args);
 
+/**
+ * main - central tour
+ *@argc: integer
+ *@argv: pointer
+ * Return: 0 if SUCCESS
+ */
 int main(int argc, char *argv[])
 {
 char buffer[BUFFER_SIZE];
@@ -86,6 +90,23 @@ execute_external_command(args);
 return (0);
 }
 /**
+ * handle_env - Handle env
+ *
+ * Return: nothing
+ */
+
+void handle_env(void)
+{
+char **env_var = environ;
+
+while (*env_var != NULL)
+{
+printf("%s\n", *env_var);
+env_var++;
+}
+}
+
+/**
  * tokenize_command - tokenizes a command string into individual tokens
  *@command: a pointer to a string
  *@tokens: a pointer to a pointer to a string
@@ -102,6 +123,125 @@ token_count++;
 token = strtok(NULL, " ");
 }
 tokens[token_count] = NULL;
+}
+/**
+ * execute_external_command - check if the command exists in the path
+ *@args: pointer to a pointer to a string
+ * Return: nothing
+ */
+
+void execute_external_command(char **args)
+{
+char *path = getenv("PATH");
+char *path_token = strtok(path, ":");
+while (path_token != NULL)
+{
+char command_path[BUFFER_SIZE];
+snprintf(command_path, BUFFER_SIZE, "%s/%s", path_token, args[0]);
+if (access(command_path, X_OK) == 0)
+{
+execute_command(command_path, args);
+return;
+}
+path_token = strtok(NULL, ":");
+}
+printf("Command nor found: %s\n", args[0]);
+}
+
+/**
+ * execute_command - executes a command b forking a new process
+ *@command_path: pointer
+ *@args: pointer to a pointer
+ */
+void execute_command(const char *command_path, char **args)
+{
+pid_t pid = fork();
+if (pid == 0)
+{
+execv(command_path, args);
+fprintf(stderr, "Error: failed to execute command\n");
+exit(1);
+}
+else if (pid > 0)
+{
+wait(NULL);
+}
+else
+{
+fprintf(stderr, "Error: failed to fork\n");
+}
+}
+
+/**
+ * handle_unsetenv - unsets an environment variable
+ *@args: pointer to pointer to a string
+ */
+void handle_unsetenv(char **args)
+{
+if (args[1] == NULL)
+{
+fprintf(stderr, "Usage: unsetenv VARIABLE\n");
+return;
+}
+if (unsetenv(args[1]) == -1)
+{
+perror("Error unsetting environment variable");
+}
+}
+
+/**
+ * handle_setenv - sets an environment variable
+ * @args: pointer to a pointer to a string
+ */
+void handle_setenv(char **args)
+{
+if (args[1] == NULL || args[2] == NULL)
+{
+fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
+return;
+}
+if (setenv(args[1], args[2], 1) == -1)
+{
+perror("Error settine environment variable");
+}
+}
+
+/**
+ * handle_exit - handle exit
+ *
+ * Return: nothing
+ */
+
+void handle_exit(void)
+{
+exit(0);
+}
+/**
+ * handle_cd - handle command
+ *@args: pointer to a pointer to a string
+ * Return: nothing
+ */
+
+void  handle_cd(char **args)
+{
+char *directory = NULL;
+
+if (args[1] == NULL)
+{
+directory = getenv("HOME");
+if (directory == NULL)
+{
+fprintf(stderr, "Error getting home directory\n");
+return;
+}
+}
+else
+{
+directory = args[1];
+}
+
+if (chdir(directory) == -1)
+perror("Error changing directory");
 }
 
 
@@ -228,11 +368,29 @@ if (strcmp(args[0], "alias") == 0)
 handle_alias(args);
 continue;
 }
-
-execute_command(args);
 }
 }
 
 fclose(file);
 }
 
+
+/**
+ * tokenize_input - description
+ *@buffer: a pointer to a string
+ *@args: a pointer to a pointer to a string
+ * Return: nothing
+ */
+
+void tokenize_input(char *buffer, char **args)
+{
+char *token = strtok(buffer, " ");
+int arg_count = 0;
+while (token != NULL && arg_count < MAX_ARGS - 1)
+{
+args[arg_count] = token;
+arg_count++;
+token = strtok(NULL, " ");
+}
+args[arg_count] = NULL;
+}
