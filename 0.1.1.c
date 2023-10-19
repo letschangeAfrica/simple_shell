@@ -31,13 +31,16 @@ return (1);
 char *find_newline(void)
 {
 char *newline;
-newline = memchr(input_buffer + input_buffer_index, '\n', BUFFER_SIZE - input_buffer_index);
+newline = memchr(input_buffer + input_buffer_index,
+'\n',
+BUFFER_SIZE - input_buffer_index);
 
 return (newline);
 }
 
 /**
  * *extract_line - extracts alinefromtheinputbufferuptothe newline character
+ *@newline: pointer to a string
  * Return: a pointer to the extracted line.
  */
 

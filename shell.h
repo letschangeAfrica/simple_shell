@@ -1,5 +1,6 @@
 #ifndef SHELL_H
 #define SHELL_H
+extern char **environ;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,17 +8,12 @@
 #include <string.h>
 #define BUFFER_SIZE 1024
 #define MAX_ARGS 10
-char input_buffer[BUFFER_SIZE];
-int input_buffer_index = 0;
-
 /**
  * Simple Shell - Create a simple shell
  *
- * Return 0 if SUCCESS
+ * Return:0 if SUCCESS
  *
  */
-
-extern char **environ;
 
 int main_2(void);
 int main(int argc, char *argv[]);

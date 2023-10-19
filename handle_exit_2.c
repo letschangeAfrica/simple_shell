@@ -11,6 +11,10 @@
 void execute_command_2(char **args);
 void handle_exit_2(char **args);
 
+/**
+ * main_2 - central tour
+ * Return: nothing
+ */
 int main_2(void)
 {
 char buffer[BUFFER_SIZE];
@@ -67,7 +71,8 @@ return (0);
 }
 
 /**
- * execute_command_2 - executes a command by forking a child process 
+ * execute_command_2 - executes a command by forking a child process
+ * @args: pointer to a pointer to a string
  */
 void execute_command_2(char **args)
 {
@@ -92,7 +97,8 @@ wait(NULL);
 }
 
 /**
- * handle_exit_2 - handles the exit command 
+ * handle_exit_2 - handles the exit command
+ *@args: pointer to a pointer to a string
  */
 
 void handle_exit_2(char **args)

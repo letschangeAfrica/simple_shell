@@ -4,7 +4,8 @@
 
 /**
  * main - central tour
- * no parameters
+ *@command: pointer to a string
+ *@tokens:pointer to a string
  * Return: 0 if SUCCESS
  */
 void tokenize_command(char *command, char **tokens);
@@ -13,7 +14,7 @@ void handle_cd(char **args);
 void handle_alias(char **args);
 void handle_variables(char *args);
 void execute_file(char *filename);
-void execute_command(char** tokens);
+void execute_command(char **tokens);
 
 int main(int argc, char *argv[])
 {
@@ -44,7 +45,7 @@ continue;
 }
 buffer[bytes_read - 1] = '\0';
 tokenize_command(buffer, commands);
-for ( j = 0; j < command_count; j++)
+for (j = 0; j < command_count; j++)
 {
 handle_comments(commands[j]);
 handle_variables(commands[j]);
@@ -84,6 +85,11 @@ execute_external_command(args);
 }
 return (0);
 }
+/**
+ * tokenize_command - tokenizes a command string into individual tokens
+ *@command: a pointer to a string
+ *@tokens: a pointer to a pointer to a string
+ */
 
 void tokenize_command(char *command, char **tokens)
 {
@@ -97,14 +103,22 @@ token = strtok(NULL, " ");
 }
 tokens[token_count] = NULL;
 }
-void execute_command(char** tokens) {
+
+/**
+ * execute_command - executes a command by forking a new process
+ *@tokens: a pointer to a pointer to a string
+ */
+void execute_command(char **tokens)
+{
 pid_t pid = fork();
-if (pid < 0) {
+if (pid < 0)
+{
 perror("Error forking process");
 return;
 }
 
-if (pid == 0) {
+if (pid == 0)
+{
 execvp(tokens[0], tokens);
 perror("Error executing command");
 exit(EXIT_FAILURE);
@@ -115,6 +129,11 @@ else
 wait(NULL);
 }
 }
+
+/**
+ * handle_alias - handle aliases in a command
+ *@args: a pointer to pointer to a string
+ */
 void handle_alias(char **args)
 {
 char *alias, *token;
@@ -140,22 +159,32 @@ token = strtok(NULL, "=");
 }
 }
 }
-void handle_variables(char *args) {
+/**
+ * handle_variables - replaces variables within acommandwithcorrespondingvalues
+ *@args: a pointer to a string
+ */
+
+void handle_variables(char *args)
+{
 char *variable = strchr(args, '$');
-if (variable != NULL) {
+if (variable != NULL)
+{
 char *value = getenv(variable + 1);
-if (value != NULL) {
+if (value != NULL)
+{
 size_t variable_length = strlen(variable);
 size_t value_length = strlen(value);
 size_t args_length = strlen(args);
 char *new_args = malloc(args_length + value_length - variable_length + 1);
-if (new_args == NULL) {
+if (new_args == NULL)
+{
 fprintf(stderr, "Memory allocation failed\n");
 return;
 }
 strncpy(new_args, args, variable - args);
 strncpy(new_args + (variable - args), value, value_length);
-strcpy(new_args + (variable - args) + value_length, variable + variable_length);
+strcpy(new_args + (variable - args) + value_length,
+variable + variable_length);
 
 
 handle_variables(new_args);
@@ -164,7 +193,10 @@ free(new_args);
 }
 
 }
-
+/**
+ * handle_comments - rmoves comments from a command
+ * @command: a pointer to a string
+ */
 void handle_comments(char *command)
 {
 char *comment = strchr(command, '#');
@@ -174,7 +206,10 @@ if (comment != NULL)
 *comment = '\0';
 }
 }
-
+/**
+ * execute_file - reads and execute command from a file
+ * @filename: a pointer to a string
+ */
 void execute_file(char *filename)
 {
 FILE *file = fopen(filename, "r");
@@ -193,7 +228,7 @@ while (fgets(line, BUFFER_SIZE, file) != NULL)
 line[strcspn(line, "\n")] = '\0';
 tokenize_command(line, commands);
 
-for ( j = 0; j < command_count; j++)
+for (j = 0; j < command_count; j++)
 {
 handle_comments(commands[j]);
 handle_variables(commands[j]);

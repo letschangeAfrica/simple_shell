@@ -7,9 +7,11 @@
 
 #define BUFFER_SIZE 1024
 #define MAX_ARGS 10
-
 void execute_command_2(char **args);
-
+/**
+ * main_2 - central tour
+ *Return: 0 if SUCCESS
+ */
 int main_2(void)
 {
 char buffer[BUFFER_SIZE];
@@ -62,6 +64,10 @@ execute_command_2(args);
 
 return (0);
 }
+/**
+ * execute_command_2 - executing a command by forking a new process
+ * @args: pointer to a pointer to a string
+ */
 void execute_command_2(char **args)
 {
 pid_t pid = fork();

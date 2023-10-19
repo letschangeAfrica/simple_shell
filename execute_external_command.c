@@ -3,7 +3,8 @@
 
 /**
  * execute_external_command - check if the command exists in the path
- *
+ *@command_path: pointer to a string
+ *@args: pointer to a pointer to a string
  * Return: nothing
  */
 void execute_command(const char *command_path, char **args);
@@ -25,7 +26,11 @@ path_token = strtok(NULL, ":");
 }
 printf("Command nor found: %s\n", args[0]);
 }
-
+/**
+ * execute_command - executes a command b forking a new process
+ *@command_path: pointer
+ *@args: pointer to a pointer
+ */
 void execute_command(const char *command_path, char **args)
 {
 pid_t pid = fork();

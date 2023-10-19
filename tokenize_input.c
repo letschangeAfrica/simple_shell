@@ -2,7 +2,8 @@
 
 /**
  * tokenize_input - description
- *
+ *@buffer: a pointer to a string
+ *@args: a pointer to a pointer to a string
  * Return: nothing
  */
 
