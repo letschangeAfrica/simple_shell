@@ -111,14 +111,6 @@ perror("Error setting environment variable");
 }
 }
 /**
- * handle_exit - exit
- */
-
-void handle_exit(void)
-{
-exit(0);
-}
-/**
  * handle_cd - handle command
  *@args: pointer to a pointer to a string
  * Return: nothing
@@ -262,6 +254,17 @@ free(path_copy);
 return (0);
 }
 /**
+ * is_exit_command - exit command
+ *@command: a pointer
+ *Return: nothing
+ */
+
+int is_exit_command(char *command)
+{
+return (strcmp(command, "exit") == 0);
+}
+
+/**
  * main - central tour
  *
  *Return: nothing
@@ -281,7 +284,8 @@ if (fgets(command, sizeof(command), stdin) == NULL)
 break;
 }
 command[strcspn(command, "\n")] = '\0';
-if (strcmp(command, "exit") == 0)
+
+if (is_exit_command(command))
 break;
 tokenize_command(command, tokens);
 if (!is_command_exists(tokens[0]))
@@ -309,10 +313,6 @@ handle_unsetenv(tokens);
 else if (strcmp(tokens[0], "setenv") == 0)
 {
 handle_setenv(tokens);
-}
-else if (strcmp(tokens[0], "exit") == 0)
-{
-handle_exit();
 }
 else if (strcmp(tokens[0], "cd") == 0)
 {
