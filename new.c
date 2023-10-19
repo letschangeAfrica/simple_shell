@@ -48,9 +48,10 @@ tokens[token_count] = NULL;
 /**
  * execute_command - executes a command b forking a new process
  *@args: pointer to a pointer
+ *Return: -1 failed status otherwise
  */
 
-void execute_command(char **args)
+int execute_command(char **args)
 {
 pid_t pid = fork();
 
@@ -62,11 +63,15 @@ exit(1);
 }
 else if (pid > 0)
 {
+int status;
+waitpid(pid, &status, 0);
+return (status);
 wait(NULL);
 }
 else
 {
 fprintf(stderr, "Error: failed to fork\n");
+return (-1);
 }
 }
 /**
@@ -227,6 +232,36 @@ if (comment != NULL)
 }
 }
 /**
+ * is_command_exists - handle commands
+ *@command:  a pointer
+ *Return: 0 if success
+ */
+
+
+int is_command_exists(char *command)
+{
+char *path = getenv("PATH");
+char *path_copy = strdup(path);
+char *path_token = strtok(path_copy, ":");
+char command_path[BUFFER_SIZE];
+
+while (path_token != NULL)
+{
+snprintf(command_path, BUFFER_SIZE, "%s/%s", path_token, command);
+
+if (access(command_path, F_OK) == 0)
+{
+free(path_copy);
+return (1);
+}
+
+path_token = strtok(NULL, ":");
+}
+
+free(path_copy);
+return (0);
+}
+/**
  * main - central tour
  *
  *Return: nothing
@@ -246,7 +281,14 @@ if (fgets(command, sizeof(command), stdin) == NULL)
 break;
 }
 command[strcspn(command, "\n")] = '\0';
+if (strcmp(command, "exit") == 0)
+break;
 tokenize_command(command, tokens);
+if (!is_command_exists(tokens[0]))
+{
+printf("Command not found: %s\n", tokens[0]);
+continue;
+}
 execute_command(tokens);
 handle_comments(command);
 handle_variables(command);
