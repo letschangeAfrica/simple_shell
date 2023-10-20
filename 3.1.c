@@ -1,0 +1,50 @@
+#include "shell.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+/**
+ * execute_setenv - executes the setenv command by extracting the env variable
+ *@command: pointer
+ *Return: -1 failed status otherwise
+ */
+void execute_setenv(char *command)
+{
+char *variable = strtok(command, " ");
+char *value = strtok(NULL, " ");
+if (variable == NULL || value == NULL)
+{
+fprintf(stderr, "setenv: Invalid command format\n");
+return;
+}
+
+if (setenv(variable, value, 1) != 0)
+{
+fprintf(stderr, "setenv: Failed to set environment variable\n");
+return;
+}
+}
+/**
+ * execute_unsetenv - executes the unsetenv command by extracting the env vari
+ *@command: pointer
+ *Return: -1 failed status otherwise
+ */
+void execute_unsetenv(char *command)
+{
+char *variable = strtok(command, " ");
+
+if (variable == NULL)
+{
+fprintf(stderr, "unsetenv: Invalid command format\n");
+return;
+}
+
+if (unsetenv(variable) != 0)
+{
+fprintf(stderr, "unsetenv: Failed to unset environment variable\n");
+return;
+}
+}

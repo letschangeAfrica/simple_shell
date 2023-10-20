@@ -1,292 +1,216 @@
 #include "shell.h"
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
-#define BUFFER_SIZE 1024
-
-void handle_comments(char *command);
 /**
- * handle_env - Handle env
- *
- * Return: nothing
- */
-
-void handle_env(void)
-{
-char **env_var = environ;
-
-while (*env_var != NULL)
-{
-printf("%s\n", *env_var);
-env_var++;
-}
-}
-/**
- * tokenize_command - tokenizes a command string into individual tokens
- *@command: a pointer to a string
- *@tokens: a pointer to a pointer to a string
- */
-
-void tokenize_command(char *command, char **tokens)
-{
-int token_count = 0;
-char *token = strtok(command, " ");
-
-while (token != NULL && token_count < BUFFER_SIZE - 1)
-{
-tokens[token_count] = token;
-token_count++;
-token = strtok(NULL, " ");
-}
-
-tokens[token_count] = NULL;
-}
-/**
- * execute_command - executes a command b forking a new process
- *@args: pointer to a pointer
+ * custom_getline - reads a line of input from the user
+ *@lineptr: pointer to a pointer
+ *@n: pointer
+ *@stream: file
  *Return: -1 failed status otherwise
  */
+ssize_t custom_getline(char **lineptr, size_t *n, FILE *stream)
+{
+static char input_buffer[BUFFER_SIZE];
+static int buffer_position;
+static int buffer_size;
 
-int execute_command(char **args)
+size_t line_length;
+char *line = NULL, current_char;
+if (buffer_position >= buffer_size)
 {
-pid_t pid = fork();
-
-if (pid == 0)
-{
-execvp(args[0], args);
-fprintf(stderr, "Error: failed to execute command\n");
-exit(1);
+ssize_t bytesRead = read(fileno(stream), input_buffer, BUFFER_SIZE);
+if (bytesRead <= 0)
+return (-1);
+buffer_position = 0;
+buffer_size = bytesRead;
 }
-else if (pid > 0)
+line_length = 0;
+while (buffer_position < buffer_size)
 {
-int status;
-waitpid(pid, &status, 0);
-return (status);
-wait(NULL);
-}
-else
+if (line_length + 1 >= *n)
 {
-fprintf(stderr, "Error: failed to fork\n");
+*n *= 2;
+line = realloc(line, *n + 1);
+if (!line)
+{
+fprintf(stderr, "Error: memory allocation failed\n");
 return (-1);
 }
 }
-/**
- * handle_unsetenv - unsets an environment variable
- *@args: pointer to pointer to a string
- */
-
-void handle_unsetenv(char **args)
+current_char = input_buffer[buffer_position++];
+line[line_length++] = current_char;
+if (current_char == '\n')
 {
-if (args[1] == NULL)
-{
-fprintf(stderr, "Usage: unsetenv VARIABLE\n");
-return;
+break;
 }
-
-if (unsetenv(args[1]) == -1)
-{
-perror("Error unsetting environment variable");
 }
+if (line_length == 0)
+{
+return (-1);
+}
+line[line_length] = '\0';
+*lineptr = line;
+return (line_length);
 }
 /**
- * handle_setenv - sets an environment variable
- *@args: pointer to pointer to a string
+ * execute_commands_from_file - execute command from file
+ *@filename: pointer
  */
-
-void handle_setenv(char **args)
+void execute_commands_from_file(const char *filename)
 {
-if (args[1] == NULL || args[2] == NULL)
+char *tokens[BUFFER_SIZE];
+size_t line_size = 0;
+ssize_t line_length;
+char *line = NULL;
+FILE *file = fopen(filename, "r");
+if (file == NULL)
 {
-fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
+printf("Failed to open file: %s\n", filename);
 return;
 }
-
-if (setenv(args[1], args[2], 1) == -1)
+while ((line_length = getline(&line, &line_size, file)) != -1)
 {
-perror("Error setting environment variable");
+line[line_length - 1] = '\0';
+
+remove_comments(line);
+
+if (strcmp(line, "alias") == 0)
+{
+print_aliases();
+continue;
+}
+if (strncmp(line, "alias ", 6) == 0)
+{
+execute_alias(line + 6);
+continue;
+}
+tokenize_command(line, tokens);
+if (!is_command_exists(tokens[0]))
+{
+printf("Command not found: %s\n", tokens[0]);
+continue;
+}
+execute_command(tokens);
+}
+
+free(line);
+fclose(file);
+}
+/**
+ * replace_variables - replace variables
+ *@command: pointer
+ */
+void replace_variables(char *command)
+{
+char *var_pos;
+char var[3];
+char var_value[10];
+int exit_status = 0;
+while ((var_pos = strstr(command, "$?")) != NULL)
+{
+sprintf(var, "%d", WEXITSTATUS(exit_status));
+strcpy(var_value, var);
+memmove(var_pos + strlen(var_value), var_pos + 2, strlen(var_pos + 2) + 1);
+memcpy(var_pos, var_value, strlen(var_value));
+}
+while ((var_pos = strstr(command, "$$")) != NULL)
+{
+sprintf(var, "%d", getpid());
+strcpy(var_value, var);
+memmove(var_pos + strlen(var_value), var_pos + 2, strlen(var_pos + 2) + 1);
+memcpy(var_pos, var_value, strlen(var_value));
 }
 }
 /**
- * handle_cd - handle command
- *@args: pointer to a pointer to a string
- * Return: nothing
+ * handle_logical_operators - handle logical operators
+ *@command: pointer
+ *Return: -1 failed status otherwise
  */
-
-void handle_cd(char **args)
+int handle_logical_operators(char *command)
 {
-char *directory = NULL;
-
-if (args[1] == NULL)
+char *token;
+char *next_token;
+int result = 0;
+token = strtok(command, "&&");
+while (token != NULL)
 {
-directory = getenv("HOME");
+replace_variables(token);
+result = system(token);
+if (result != 0)
+break;
 
-if (directory == NULL)
+next_token = strtok(NULL, "&&");
+if (next_token != NULL)
 {
-fprintf(stderr, "Error getting home directory\n");
-return;
-}
+replace_variables(next_token);
+result = system(next_token);
+if (result == 0)
+token = strtok(NULL, "&&");
+else
+break;
 }
 else
 {
-directory = args[1];
-}
-
-if (chdir(directory) == -1)
-{
-perror("Error changing directory");
+break;
 }
 }
-/**
- * handle_alias - handle aliases in a command
- *@args: a pointer to pointer to a string
- */
 
-void handle_alias(char **args)
-{
-char *alias, *token;
-
-if (args[1] == NULL)
-{
-alias = getenv("ALIAS");
-
-if (alias != NULL)
-{
-token = strtok(alias, ",");
-
-while (token != NULL)
-{
-printf("%s\n", token);
-token = strtok(NULL, ",");
-}
-}
-}
-else
-{
-while (token != NULL)
-{
-printf("%s\n", token);
-token = strtok(NULL, "=");
-}
-}
-}
-/**
- * handle_variables - replaces variables within acommandwithcorrespondingvalues
- *@args: a pointer to a string
- */
-
-void handle_variables(char *args)
-{
-char *variable = strchr(args, '$');
-
-if (variable != NULL)
-{
-char *value = getenv(variable + 1);
-
-if (value != NULL)
-{
-size_t variable_length = strlen(variable);
-size_t value_length = strlen(value);
-size_t args_length = strlen(args);
-char *new_args = malloc(args_length + value_length - variable_length + 1);
-
-if (new_args == NULL)
-{
-fprintf(stderr, "Memory allocation failed\n");
-return;
-}
-
-strncpy(new_args, args, variable - args);
-strncpy(new_args + (variable - args), value, value_length);
-strcpy(new_args + (variable - args) + value_length,
-variable + variable_length);
-
-handle_variables(new_args);
-free(new_args);
-}
-}
-}
-/**
- * handle_comments - rmoves comments from a command
- * @command: a pointer to a string
- */
-
-void handle_comments(char *command)
-{
-char *comment = strchr(command, '#');
-
-if (comment != NULL)
-{
-*comment = '\0';
-}
-}
-/**
- * is_command_exists - handle commands
- *@command:  a pointer
- *Return: 0 if success
- */
-
-
-int is_command_exists(char *command)
-{
-char *path = getenv("PATH");
-char *path_copy = strdup(path);
-char *path_token = strtok(path_copy, ":");
-char command_path[BUFFER_SIZE];
-
-while (path_token != NULL)
-{
-snprintf(command_path, BUFFER_SIZE, "%s/%s", path_token, command);
-
-if (access(command_path, F_OK) == 0)
-{
-free(path_copy);
+if (result == 0)
 return (1);
-}
-
-path_token = strtok(NULL, ":");
-}
-
-free(path_copy);
+else
 return (0);
 }
 /**
- * is_exit_command - exit command
- *@command: a pointer
- *Return: nothing
- */
-
-int is_exit_command(char *command)
+* main - central tour
+*@argc: integer
+*@argv: pointer
+*Return: nothing
+*/
+int main(int argc, char *argv[])
 {
-return (strcmp(command, "exit") == 0);
+int exit_status = 0;
+char *command = NULL, *tokens[BUFFER_SIZE];
+size_t command_size = 0;
+ssize_t line_length;
+if (argc > 1)
+{
+execute_commands_from_file(argv[1]);
+return (0);
 }
-
-/**
- * main - central tour
- *
- *Return: nothing
- */
-int main(void)
-{
-char command[BUFFER_SIZE];
-char *tokens[BUFFER_SIZE];
-
 while (1)
 {
 printf("$ ");
 fflush(stdout);
-
-if (fgets(command, sizeof(command), stdin) == NULL)
+line_length = custom_getline(&command, &command_size, stdin);
+if (line_length == -1)
+break;
+command[line_length - 1] = '\0';
+remove_comments(command);
+if (is_exit_command(command, &exit_status))
+break;
+if (is_env_command(command))
+print_environment();
+else if (is_setenv_command(command))
+execute_setenv(command + 7);
+else if (is_unsetenv_command(command))
+execute_unsetenv(command + 9);
+else if (is_cd_command(command))
+execute_cd(command + 3);
+else if (strcmp(command, "alias") == 0)
+print_aliases();
+else if (strncmp(command, "alias ", 6) == 0)
+execute_alias(command + 6);
+else
 {
-break;
-}
-command[strcspn(command, "\n")] = '\0';
-
-if (is_exit_command(command))
-break;
+replace_variables(command);
+if (handle_logical_operators(command))
+continue;
+handle_command_separator(command);
 tokenize_command(command, tokens);
 if (!is_command_exists(tokens[0]))
 {
@@ -294,35 +218,8 @@ printf("Command not found: %s\n", tokens[0]);
 continue;
 }
 execute_command(tokens);
-handle_comments(command);
-handle_variables(command);
-
-if (tokens[0] == NULL)
-{
-continue;
-}
-
-if (strcmp(tokens[0], "env") == 0)
-{
-handle_env();
-}
-else if (strcmp(tokens[0], "unsetenv") == 0)
-{
-handle_unsetenv(tokens);
-}
-else if (strcmp(tokens[0], "setenv") == 0)
-{
-handle_setenv(tokens);
-}
-else if (strcmp(tokens[0], "cd") == 0)
-{
-handle_cd(tokens);
-}
-else if (strcmp(tokens[0], "alias") == 0)
-{
-handle_alias(tokens);
 }
 }
-
-return (0);
+free(command);
+return (WEXITSTATUS(exit_status));
 }

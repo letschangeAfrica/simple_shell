@@ -1,121 +1,142 @@
 #include "shell.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 /**
- * read_input - Store the standard input in the buffer
- *
- * Return: 0ifthere ismoretoread,-1iftherewasanerrorinthe input, 1 otherwise.
+ * tokenize_command - tokenizes a command string into individual tokens
+ *@command: a pointer to a string
+ *@tokens: a pointer to a pointer to a string
  */
-int read_input(void)
+
+void tokenize_command(char *command, char **tokens)
 {
-char input_buffer[BUFFER_SIZE];
-int input_buffer_index = 0;
-if (input_buffer_index == 0)
+int token_count = 0;
+char *token = strtok(command, " ");
+
+while (token != NULL && token_count < BUFFER_SIZE - 1)
 {
-int bytes_read = read(STDIN_FILENO, input_buffer, BUFFER_SIZE);
-if (bytes_read == 0)
-{
-return (0);
+tokens[token_count] = token;
+token_count++;
+token = strtok(NULL, " ");
 }
 
-if (bytes_read < 0)
+tokens[token_count] = NULL;
+}
+/**
+ * execute_command - executes a command b forking a new process
+ *@args: pointer to a pointer
+ *Return: -1 failed status otherwise
+ */
+
+int execute_command(char **args)
 {
-perror("Error reading command");
+pid_t pid = fork();
+
+if (pid == 0)
+{
+execvp(args[0], args);
+fprintf(stderr, "Error: failed to execute command\n");
+exit(1);
+}
+else if (pid > 0)
+{
+int status;
+waitpid(pid, &status, 0);
+return (status);
+wait(NULL);
+}
+else
+{
+fprintf(stderr, "Error: failed to fork\n");
 return (-1);
 }
 }
+/**
+ * is_command_exists - handle commands
+ *@command:  a pointer
+ *Return: 0 if success
+ */
 
+
+int is_command_exists(char *command)
+{
+char *path = getenv("PATH");
+char *path_copy = strdup(path);
+char *path_token = strtok(path_copy, ":");
+char command_path[BUFFER_SIZE];
+while (path_token != NULL)
+{
+snprintf(command_path, BUFFER_SIZE, "%s/%s", path_token, command);
+
+if (access(command_path, F_OK) == 0)
+{
+free(path_copy);
 return (1);
 }
+path_token = strtok(NULL, ":");
+}
 
+free(path_copy);
+return (0);
+}
 /**
- * *find_newline - searches for the first occurnce of a newlineintheinputbuffer
- * Return: a pointer to the newline character if found or NULL
+ * is_cd_command - is this cd command
+ *@command: pointer
+ *Return: -1 failed status otherwise
  */
-char *find_newline(void)
+bool is_cd_command(char *command)
 {
-char input_buffer[BUFFER_SIZE];
-int input_buffer_index = 0;
-char *newline;
-newline = memchr(input_buffer + input_buffer_index,
-'\n',
-BUFFER_SIZE - input_buffer_index);
-
-return (newline);
+return (strncmp(command, "cd", 2) == 0);
 }
-
 /**
- * *extract_line - extracts alinefromtheinputbufferuptothe newline character
- *@newline: pointer to a string
- * Return: a pointer to the extracted line.
+ * execute_cd - executes the cd command by extracting the dirctory path
+ *@command: pointer
+ *Return: -1 failed status otherwise
  */
-
-char *extract_line(char *newline)
+void execute_cd(char *command)
 {
-char input_buffer[BUFFER_SIZE];
-int input_buffer_index = 0;
-int line_end_index = newline - input_buffer + input_buffer_index;
-int line_size = line_end_index - input_buffer_index;
-
-char *line = malloc(line_size + 1);
-if (line == NULL)
+char *directory = strtok(command, " ");
+char current_directory[MAX_PATH_LENGTH];
+if (directory == NULL)
 {
-perror("Error allocating memory");
-return (NULL);
+directory = getenv("HOME");
+if (directory == NULL)
+{
+fprintf(stderr, "cd: Failed to retrieve home directory\n");
+return;
 }
-
-memcpy(line, input_buffer + input_buffer_index, line_size);
-line[line_size] = '\0';
-
-input_buffer_index = line_end_index + 1;
-
-return (line);
 }
-
-/**
- * *custom_getline - read input from the standard input
- * Return: a line of text as a dynamically allocated string
- *
- */
-
-char *custom_getline(void)
+else if (strcmp(directory, "-") == 0)
 {
-char input_buffer[BUFFER_SIZE], *line = NULL;
-int input_buffer_index = 0, line_length = 0;
-char *newline, *line_realloc;
-int result, remaining_bytes;
-while (1)
+directory = getenv("OLDPWD");
+if (directory == NULL)
 {
-result = read_input();
-
-if (result == 0)
-{
-return (NULL);
+fprintf(stderr, "cd: Failed to retrieve previous directory\n");
+return;
 }
-if (result < 0)
-{
-return (NULL);
 }
-
-newline = find_newline();
+if (getcwd(current_directory, MAX_PATH_LENGTH) == NULL)
 {
-if (newline != NULL)
+fprintf(stderr, "cd: Failed to retrieve current directory\n");
+return;
+}
+if (chdir(directory) != 0)
 {
-line = extract_line(newline);
-return (line);
+fprintf(stderr, "cd: Failed to change directory to %s\n", directory);
 }
-
-remaining_bytes = BUFFER_SIZE - input_buffer_index;
-line_realloc = realloc(line, line_length + remaining_bytes + 1);
-if (line_realloc == NULL)
+if (setenv("OLDPWD", current_directory, 1) != 0)
 {
-perror("Error allocating memory");
-return (NULL);
+fprintf(stderr, "cd: Failed to set OLDPWD environment variable\n");
+return;
 }
-line = line_realloc;
-
-memcpy(line + line_length, input_buffer + input_buffer_index, remaining_bytes);
-line_length += remaining_bytes;
-
-input_buffer_index = 0;
-}
+if (setenv("PWD", directory, 1) != 0)
+{
+fprintf(stderr, "cd: Failed to set PWD environment variable\n");
+return;
 }
 }

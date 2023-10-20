@@ -1,0 +1,103 @@
+#include "shell.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+/**
+ * add_alias - handles alias
+ *@name: pointer
+ *@value: pointer
+ *Return: -1 failed status otherwise
+ */
+
+void add_alias(char *name, char *value)
+{
+Alias aliases[MAX_ALIASES];
+int num_aliases = 0;
+if (num_aliases >= MAX_ALIASES)
+{
+printf("Maximum number of aliases reached.\n");
+return;
+}
+
+aliases[num_aliases].name = strdup(name);
+aliases[num_aliases].value = strdup(value);
+num_aliases++;
+}
+/**
+ * print_aliases - prints alias
+ *
+ */
+void print_aliases(void)
+{
+Alias aliases[MAX_ALIASES];
+int num_aliases = 0;
+int i;
+for (i = 0; i < num_aliases; i++)
+{
+printf("%s='%s'\n", aliases[i].name, aliases[i].value);
+}
+}
+/**
+ * remove_comments - remove comments
+ *@command: pointer
+ */
+void remove_comments(char *command)
+{
+char *comment_pos = strchr(command, '#');
+if (comment_pos != NULL)
+{
+*comment_pos = '\0';
+}
+}
+/**
+ * handle_command_separator - handles command separator
+ *@command: pointer
+ */
+void handle_command_separator(char *command)
+{
+char *token;
+token = strtok(command, ";");
+while (token != NULL)
+{
+replace_variables(token);
+system(token);
+token = strtok(NULL, ";");
+}
+}
+/**
+ * execute_alias - executes alias
+ *@command: pointer
+ *Return: -1 failed status otherwise
+ */
+void execute_alias(char *command)
+{
+char *token = strtok(command, " ");
+char *name = NULL;
+char *value = NULL;
+while (token != NULL)
+{
+if (name == NULL)
+{
+name = token;
+}
+else if (value == NULL)
+{
+value = token;
+}
+else
+{
+add_alias(name, value);
+name = token;
+value = NULL;
+}
+token = strtok(NULL, " ");
+}
+if (name != NULL && value != NULL)
+{
+add_alias(name, value);
+}
+}
