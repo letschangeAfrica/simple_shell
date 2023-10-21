@@ -61,7 +61,7 @@ return (line_length);
  * execute_commands_from_file - execute command from file
  *@filename: pointer
  */
-void execute_commands_from_file(const char *filename, const char *program_name, int *status)
+void execute_commands_from_file(const char *filename)
 {
 char *tokens[BUFFER_SIZE];
 size_t line_size = 0;
@@ -70,8 +70,7 @@ char *line = NULL;
 FILE *file = fopen(filename, "r");
 if (file == NULL)
 {
-fprintf(stderr, "%s: Can't open %s\n", program_name, filename);
-*status = 2;
+printf("Can't open %s\n", filename);
 return;
 }
 while ((line_length = getline(&line, &line_size, file)) != -1)
@@ -101,7 +100,6 @@ execute_command(tokens);
 
 free(line);
 fclose(file);
-*status = 0;
 }
 /**
  * replace_variables - replace variables
@@ -179,15 +177,10 @@ int exit_status = 0;
 char *command = NULL, *tokens[BUFFER_SIZE];
 size_t command_size = 0;
 ssize_t line_length;
-int status = 0;
 if (argc > 1)
 {
-execute_commands_from_file(argv[1], argv[0], &status);
-if (status != 0)
-{
-fprintf(stderr, "%s: Error executing commands from file\n", argv[0]);
-return (1);
-}
+execute_commands_from_file(argv[1]);
+return (0);
 }
 while (1)
 {

@@ -49,7 +49,7 @@ void execute_alias(char *command);
 void execute_setenv(char *command);
 ssize_t custom_getline(char **lineptr, size_t *n, FILE *stream);
 void execute_unsetenv(char *command);
-void execute_commands_from_file(const char *filename, const char *program_name,int *status);
+void execute_commands_from_file(const char *filename);
 void replace_variables(char *command);
 int handle_logical_operators(char *command);
 
