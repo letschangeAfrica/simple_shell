@@ -70,8 +70,8 @@ char *line = NULL;
 FILE *file = fopen(filename, "r");
 if (file == NULL)
 {
-printf("Failed to open file: %s\n", filename);
-return;
+fprintf(stderr, "%s: Can't open %s\n", argv[0] filename);
+return (2);
 }
 while ((line_length = getline(&line, &line_size, file)) != -1)
 {
