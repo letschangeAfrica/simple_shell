@@ -1,2 +1,2 @@
-Learning how to create a simple shell in C offers an Understanding of Opearting System, Mastery of C programming, Familiarity with Unix/ Linux Concepts, CustomizAtion and Automation, Debugging and Troubleshouting Skills, Enhanced Problen_Solving Abilities, Deeper Insight into software Tools, Portfolio and learning Experience !
+Learning how to create a simple shell in C offers an Understanding of Operating System, Mastery of C programming, Familiarity with Unix/ Linux Concepts, Customization and Automation, Debugging and Troubleshooting Skills, Enhanced Problem-Solving Abilities, Deeper Insight into software Tools, Portfolio and learning Experience !
 
